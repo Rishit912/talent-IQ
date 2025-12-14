@@ -4,10 +4,26 @@ import express from "express";
 import path from "path";
 import {ENV} from "./lib/env.js";
 import { connectDB } from "./lib/db.js";
+import cors from "cors";
+
+import { serve } from "inngest/express";
 
 const app = express()
 
 const __dirname = path.resolve()
+
+//middleware to parse json data
+
+app.use(express.json());
+
+//credentials true means to allow cookies to be sent along with requests
+
+app.use(cors({origin:ENV.CLIENT_URL,Credentials:true}));
+
+//test api endpoint
+
+
+app.use("api/inngest",serve({client : inngest , functions }));
 
 
 app.get("/health",(req,res) => {
