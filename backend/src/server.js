@@ -38,6 +38,11 @@ res.status(200).json({msg: "this is the books endpoint" });
 });
 
 
+app.get("/video-calls",protectRoute , (req,res) => {
+res.status(200).json({msg: "this is the video calls endpoint" });
+});
+
+
 //make our app ready for the deployment 
 
 if(ENV.NODE_ENV === "production"){
