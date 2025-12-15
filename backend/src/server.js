@@ -1,69 +1,145 @@
-// const express = require("express")
-
-import express from "express";
-import path from "path";
-import {ENV} from "./lib/env.js";
-import { connectDB } from "./lib/db.js";
-import cors from "cors";''
-
-import { serve  } from "inngest/express";
-import { inngest , functions } from "./lib/inngest.js"; 
-
-const app = express()
-
-const __dirname = path.resolve()
-
-//middleware to parse json data
-
-app.use(express.json());
-
-//credentials true means to allow cookies to be sent along with requests
-
-app.use(cors({origin:ENV.CLIENT_URL,Credentials:true}));
-
-//test api endpoint
-
-
-app.use("api/inngest",serve({client : inngest , functions }));
-
-
-app.get("/health",(req,res) => {
-res.status(200).json({msg: "api is up and running" });
-});
+  // const express = require("express")
 
 
 
-app.get("/books",(req,res) => {
-res.status(200).json({msg: "this is the books endpoint" });
-});
+        import express from "express";
+
+        import path from "path";
+
+        import {ENV} from "./lib/env.js";
+
+        import { connectDB } from "./lib/db.js";
+
+        import cors from "cors";''
 
 
-app.get("/video-calls",protectRoute , (req,res) => {
-res.status(200).json({msg: "this is the video calls endpoint" });
-});
+
+        import { serve  } from "inngest/express";
+
+        import { inngest , functions } from "./lib/inngest.js";
 
 
-//make our app ready for the deployment 
 
-if(ENV.NODE_ENV === "production"){
-app.use(express.static(path.join(__dirname,"../frontend/dist")));
+        import { clerkMiddleware } from '@clerk/express'
 
-app.get("/{*any}",(req,res)=>{
-    res.sendFile(path.join(__dirname,"../frontend","dist","index.html"));
-})  
+        import { protectRoute } from "./middleware/protectRoute.js";        
 
-}
+        import chatRoutes from "./routers/chatRoutes.js";
 
-const startServer = async () => {
-    try {
-        await connectDB();  
-        app.listen(ENV.PORT, () => {
-            console.log("server is running on the port number:",ENV.PORT);
+    
+        const app = express()
+
+
+
+        const __dirname = path.resolve()
+
+
+
+        //middleware to parse json data
+
+
+
+        app.use(express.json());
+
+
+
+
+
+        //credentials true means to allow cookies to be sent along with requests
+
+
+
+        app.use(cors({origin:ENV.CLIENT_URL,Credentials:true}));
+
+
+
+        //test api endpoint
+
+
+
+        app.use(clerkMiddleware()); //authentication middleware from clerk this add req.auth object to every request
+
+
+
+        //inngest serve middleware to handle inngest functions
+
+
+
+
+
+        app.use("api/inngest",serve({client : inngest , functions }));
+        app.use("/api/chat", chatRoutes);
+
+  
+
+
+        app.get("/health",(req,res) => {
+
+        
+
+        res.status(200).json({msg: "api is up and running" });
+
         });
-    } catch (error) {
-        console.error("Failed to start the server", error);
-    }   
-};
 
-startServer();
 
+
+
+
+        // when you pass an array of middleware functions to a route handler express will execute them in order
+
+        app.get("/video-calls",protectRoute , (req,res) => {
+
+
+
+        res.status(200).json({msg: "this is the protected video calls endpoint" });
+
+        });
+
+
+
+
+        //make our app ready for the deployment
+
+
+
+        if(ENV.NODE_ENV === "production"){
+
+        app.use(express.static(path.join(__dirname,"../frontend/dist")));
+
+
+
+        app.get("/{*any}",(req,res)=>{
+
+            res.sendFile(path.join(__dirname,"../frontend","dist","index.html"));
+
+        })  
+
+
+
+        }
+
+
+
+        const startServer = async () => {
+
+            try {
+
+                await connectDB();  
+
+                app.listen(ENV.PORT, () => {
+
+                    console.log("server is running on the port number:",ENV.PORT);
+
+                });
+
+            } catch (error) {
+
+                console.error("Failed to start the server", error);
+
+            }  
+
+        };
+
+
+
+        startServer();
