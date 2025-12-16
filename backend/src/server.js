@@ -26,6 +26,7 @@
 
         import chatRoutes from "./routers/chatRoutes.js";
 
+        import sessionRoutes from "./routers/sessionRoutes.js";
     
         const app = express()
 
@@ -69,6 +70,8 @@
 
         app.use("api/inngest",serve({client : inngest , functions }));
         app.use("/api/chat", chatRoutes);
+        app.use("/api/sessions", sessionRoutes); //sessions related routes
+
 
   
 

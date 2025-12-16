@@ -28,6 +28,10 @@ const syncUser = inngest.createFunction (
             image: newUser.profileImage,
            });
 
+
+           // send welcome email or other onboarding tasks
+           
+
            
         }
 );
