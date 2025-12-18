@@ -1,3 +1,4 @@
+
 import { Link } from "react-router";
 import {
   ArrowRightIcon,
@@ -9,6 +10,7 @@ import {
   ZapIcon,
 } from "lucide-react";
 import { SignInButton } from "@clerk/clerk-react";
+import HeroAnimation from "./HeroAnimation";
 
 function HomePage() {
   return (
@@ -98,7 +100,7 @@ function HomePage() {
             </div>
 
             {/* STATS */}
-            <div className="stats stats-vertical lg:stats-horizontal bg-base-100 shadow-lg">
+            <div className="stats stats-vertical  md:stats-horizontal lg:stats-horizontal bg-base-100 shadow-lg">
               <div className="stat">
                 <div className="stat-value text-primary">10K+</div>
                 <div className="stat-title">Active Users</div>
@@ -115,11 +117,10 @@ function HomePage() {
           </div>
 
           {/* RIGHT IMAGE */}
-          <img
-            src="/hero.png"
-            alt="CodeCollab Platform"
-            className="w-full h-auto rounded-3xl shadow-2xl border-4 border-base-100 hover:scale-105 transition-transform duration-500"
-          />
+          {/* right side section */}
+<div className="relative lg:h-[600px] flex items-center justify-center py-10 lg:py-0 overflow-visible">
+  <HeroAnimation />
+</div>
         </div>
       </div>
 
