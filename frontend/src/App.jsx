@@ -1,33 +1,36 @@
-import { SignIn , SignedOut , SignInButton , SignOutButton , UserButton , useUser} from '@clerk/clerk-react'
 
-import { Navigate, Route , Routes } from 'react-router'
-import HomePage from './pages/HomePage'
-import ProblemsPage from './pages/ProblemsPage'
-import {Toaster} from 'react-hot-toast'
+import { useUser } from "@clerk/clerk-react";
+import { Navigate, Route, Routes } from "react-router";
+import HomePage from "./pages/HomePage";
+
+import { Toaster } from "react-hot-toast";
+import DashboardPage from "./pages/DashBoardPage";
+import ProblemPage from "./pages/ProblemPage";
+import ProblemsPage from "./pages/ProblemsPage";
+import SessionPage from "./pages/SessionPage";
+import HostDashboard from "./pages/HostDashboard";
 
 function App() {
+  const { isSignedIn, isLoaded } = useUser();
 
-  
-      const {isSignedIn} = useUser();
+  // this will get rid of the flickering effect
+  if (!isLoaded) return null;
+
   return (
-  <>
+    <>
+      <Routes>
+        <Route path="/" element={!isSignedIn ? <HomePage /> : <Navigate to={"/dashboard"} />} />
+        <Route path="/dashboard" element={isSignedIn ? <DashboardPage /> : <Navigate to={"/"} />} />
 
-    <Routes>
+        <Route path="/problems" element={isSignedIn ? <ProblemsPage /> : <Navigate to={"/"} />} />
+        <Route path="/problem/:id" element={isSignedIn ? <ProblemPage /> : <Navigate to={"/"} />} />
+        <Route path="/session/:id" element={isSignedIn ? <SessionPage /> : <Navigate to={"/"} />} />
+        <Route path="/host" element={isSignedIn ? <HostDashboard /> : <Navigate to={'/'} />} />
+      </Routes>
 
-      <Route path="/" element ={<HomePage />} />
-      <Route path="/problems" element ={isSignedIn ? <ProblemsPage /> : <Navigate to="/" />} />
-      <Route path="/books" element ={<Navigate to ="/" />} />
-    </Routes>
-
-    <Toaster position="top-right" toastOptions={{duration:3000}} />
-  </>
-
-    
-  )
+      <Toaster toastOptions={{ duration: 3000 }} />
+    </>
+  );
 }
 
-export default App
-
-
-// tw , daisyui  , react-hot-toast , react-router
-// todos : react-query  aka tanstack query , axios
+export default App;
