@@ -45,12 +45,18 @@ app.get("/health", (req, res) => {
     res.status(200).json({ message: "api is up and running" });
 });
 
+// root route for sanity on Vercel
+app.get("/", (req, res) => {
+    res.status(200).json({ message: "Talent-IQ backend running", env: ENV.NODE_ENV || "" });
+});
+
 app.get("/video-calls", protectRoute, (req, res) => {
     res.status(200).json({ message: "this is the protected video calls endpoint" });
 });
 
 // static for production
-if (ENV.NODE_ENV === "production") {
+// Only serve static frontend when running the combined app locally or on a non-Vercel host
+if (ENV.NODE_ENV === "production" && !process.env.VERCEL) {
     app.use(express.static(path.join(__dirname, "../frontend/dist")));
     app.get(/.*/, (req, res) => {
         res.sendFile(path.join(__dirname, "../frontend", "dist", "index.html"));
