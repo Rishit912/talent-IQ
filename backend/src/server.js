@@ -16,9 +16,29 @@ const __dirname = path.resolve();
 // middleware
 app.use(express.json());
 
-// CORS: allow credentials and specific origin
+// CORS: allow credentials and specific origin(s)
+// add local defaults for dev if not provided
+// CORS: allow credentials and specific origins (local dev + deployed)
+const allowedOrigins = [
+    ENV.CLIENT_URL || "http://localhost:5173",
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "https://talent-iq-rosy.vercel.app",
+];
+
+const isAllowedOrigin = (origin) => {
+    if (!origin) return true; // same-origin / curl
+    if (allowedOrigins.includes(origin)) return true;
+    if (/^http:\/\/localhost:\d+$/i.test(origin)) return true; // any localhost port
+    if (/^https?:\/\/[^/]+\.vercel\.app$/i.test(origin)) return true; // any vercel env
+    return false;
+};
+
 const corsOptions = {
-    origin: ENV.CLIENT_URL || "http://localhost:5173",
+    origin: (origin, callback) => {
+        if (isAllowedOrigin(origin)) return callback(null, origin || true); // echo requesting origin
+        return callback(new Error(`Not allowed by CORS: ${origin}`));
+    },
     credentials: true,
 };
 app.use(cors(corsOptions));
@@ -85,4 +105,10 @@ const startServer = async () => {
     }
 };
 
-startServer();
+// In Vercel serverless, export the Express app instead of listening
+if (!process.env.VERCEL) {
+    // local or non-Vercel environment
+    startServer();
+}
+
+export default app;
