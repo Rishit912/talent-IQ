@@ -4,7 +4,8 @@ import { Navigate, Route, Routes } from "react-router";
 import HomePage from "./pages/HomePage";
 
 import { Toaster } from "react-hot-toast";
-import DashboardPage from "./pages/DashBoardPage";
+// Use correct casing to match file system name in build
+import DashboardPage from "./pages/DashboardPage";
 import ProblemPage from "./pages/ProblemPage";
 import ProblemsPage from "./pages/ProblemsPage";
 import SessionPage from "./pages/SessionPage";
