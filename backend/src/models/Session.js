@@ -18,19 +18,22 @@ const sessionSchema = new mongoose.Schema(
         ref: 'User',
         required: true,
     },
-    participants:{
+    participants: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
-        default: null,
-    },
-    status:{
+    }],
+    status: {
         type: String,
-        enum: ['Active', 'Completed'],
+        enum: ['active', 'completed'],
         default: 'active',
     },
-    callID:{
+    callId: {
         type: String,
-         default: "",
+        default: "",
+    },
+    accessCodeHash: {
+        type: String,
+        default: "",
     },
 
 }, 

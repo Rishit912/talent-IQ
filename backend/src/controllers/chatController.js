@@ -1,22 +1,23 @@
 import { chatClient } from "../lib/stream.js";
 
+function getClerkId(user) {
+    return user?.clerkId || user?.ClerkId || user?.clerkid || null;
+}
+
 export async function getStreamToken(req, res) {
-
     try {
+        const clerkId = getClerkId(req.user);
+        if (!clerkId) return res.status(400).json({ error: "Missing clerk id" });
 
-        // use the stream chat client to create a token for the user
-        //use clerkid for the stream aa(not mongodb _id) => it should be match the id we have in the stream 
-        const token = chatClient.createToken(req.user.clerkid);
-        res.status(200).json({ 
+        const token = chatClient.createToken(clerkId);
+        res.status(200).json({
             token,
-            userId: req.user.clerkid,
+            userId: clerkId,
             userName: req.user.name,
             userImage: req.user.profileImage,
         });
-    }
-    catch (error) {
+    } catch (error) {
         console.error("Error generating stream token:", error);
         res.status(500).json({ error: "Failed to generate chat token" });
     }
-
 }
