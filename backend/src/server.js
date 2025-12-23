@@ -107,9 +107,13 @@ const startServer = async () => {
     }
 };
 
-// In Vercel serverless, export the Express app instead of listening
-if (!process.env.VERCEL) {
-    // local or non-Vercel environment
+// In Vercel serverless, we must still initialize the DB connection,
+// but Vercel handles listening, so we only call startServer() locally.
+if (process.env.VERCEL) {
+    connectDB().catch((err) => {
+        console.error("Failed to connect to MongoDB in Vercel environment", err);
+    });
+} else {
     startServer();
 }
 
