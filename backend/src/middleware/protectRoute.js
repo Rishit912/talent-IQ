@@ -18,30 +18,35 @@ export const protectRoute = [
 
             let user = await User.findOne({ clerkId });
 
-            // Auto-provision user from Clerk if not found
+            // Auto-provision user locally if not found
             if (!user) {
-                try {
-                    console.log(`[protectRoute] user not found locally, fetching from Clerk: ${clerkId}`);
-                    const clerkUser = await clerkClient.users.getUser(clerkId);
-                    const name = clerkUser.fullName || `${clerkUser.firstName || ''} ${clerkUser.lastName || ''}`.trim() || 'Unknown';
-                    const email = (clerkUser.emailAddresses && clerkUser.emailAddresses[0] && clerkUser.emailAddresses[0].emailAddress) || `${clerkId}@users.local`;
-                    const profileImage = clerkUser.profileImageUrl || clerkUser.imageUrl || '';
+                console.log(`[protectRoute] user not found locally, attempting to provision: ${clerkId}`);
 
-                    try {
-                        user = await User.create({ name, email, profileImage, clerkId });
-                        console.log('[protectRoute] created local user for clerkId:', clerkId);
-                    } catch (createErr) {
-                        console.warn('[protectRoute] user create failed, attempting to find existing user:', createErr?.message || createErr);
-                        // If creation failed due to duplicate key, try to find existing by clerkId or email
-                        user = await User.findOne({ $or: [{ clerkId }, { email }] });
-                        if (!user) {
-                            console.error('[protectRoute] failed to provision user and could not find existing user');
-                            return res.status(500).json({ message: 'Failed to provision user from auth provider' });
-                        }
-                    }
+                // Default fallback values in case Clerk API call fails
+                let name = 'Unknown';
+                let email = `${clerkId}@users.local`;
+                let profileImage = '';
+
+                try {
+                    const clerkUser = await clerkClient.users.getUser(clerkId);
+                    name = clerkUser.fullName || `${clerkUser.firstName || ''} ${clerkUser.lastName || ''}`.trim() || 'Unknown';
+                    email = (clerkUser.emailAddresses && clerkUser.emailAddresses[0] && clerkUser.emailAddresses[0].emailAddress) || email;
+                    profileImage = clerkUser.profileImageUrl || clerkUser.imageUrl || '';
                 } catch (err) {
-                    console.error('[protectRoute] failed to fetch/create user from Clerk:', err);
-                    return res.status(500).json({ message: 'Failed to provision user from auth provider' });
+                    console.warn('[protectRoute] failed to fetch user details from Clerk, using fallbacks:', err?.message || err);
+                }
+
+                try {
+                    user = await User.create({ name, email, profileImage, clerkId });
+                    console.log('[protectRoute] created local user for clerkId:', clerkId);
+                } catch (createErr) {
+                    console.warn('[protectRoute] user create failed, attempting to find existing user:', createErr?.message || createErr);
+                    // If creation failed due to duplicate key, try to find existing by clerkId or email
+                    user = await User.findOne({ $or: [{ clerkId }, { email }] });
+                    if (!user) {
+                        console.error('[protectRoute] failed to provision user and could not find existing user');
+                        return res.status(500).json({ message: 'Failed to provision user from auth provider' });
+                    }
                 }
             }
 

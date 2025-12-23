@@ -66,21 +66,6 @@ function Navbar() {
             </div>
           </Link>
 
-          <Link
-            to={'/host'}
-            className={`px-4 py-2.5 rounded-lg transition-all duration-200 
-              ${
-                isActive("/host")
-                  ? "bg-primary text-primary-content"
-                  : "hover:bg-base-200 text-base-content/70 hover:text-base-content"
-              }
-              `}
-          >
-            <div className="flex items-center gap-x-2.5">
-              <span className="font-medium hidden sm:inline">Host</span>
-            </div>
-          </Link>
-
           <div className="ml-4 mt-2">
             <UserButton />
           </div>

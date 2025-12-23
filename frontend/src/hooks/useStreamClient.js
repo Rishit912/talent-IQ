@@ -9,16 +9,22 @@ function useStreamClient(session, loadingSession, isHost, isParticipant) {
   const [call, setCall] = useState(null);
   const [chatClient, setChatClient] = useState(null);
   const [channel, setChannel] = useState(null);
-  const [isInitializingCall, setIsInitializingCall] = useState(true);
+  const [isInitializingCall, setIsInitializingCall] = useState(false);
 
   useEffect(() => {
     let videoCall = null;
     let chatClientInstance = null;
 
     const initCall = async () => {
-      if (!session?.callId) return;
-      if (!isHost && !isParticipant) return;
-      if (session.status === "completed") return;
+      // Start initializing
+      setIsInitializingCall(true);
+
+      // If there's nothing to join (no call, not a participant/host, or completed),
+      // stop immediately and clear the loading state so the UI doesn't hang.
+      if (!session?.callId || (!isHost && !isParticipant) || session.status === "completed") {
+        setIsInitializingCall(false);
+        return;
+      }
 
       try {
         const { token, userId, userName, userImage } = await sessionApi.getStreamToken();
