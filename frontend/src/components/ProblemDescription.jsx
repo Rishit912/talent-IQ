@@ -1,5 +1,5 @@
 import { getDifficultyBadgeClass } from "../lib/utils";
-function ProblemDescription({ problem, currentProblemId, onProblemChange, allProblems }) {
+function ProblemDescription({ problem, currentProblemId, onProblemChange, allProblems, selectedLanguage, showSolution, onToggleSolution }) {
   return (
     <div className="h-full overflow-y-auto bg-base-200">
       {/* HEADER SECTION */}
@@ -87,6 +87,26 @@ function ProblemDescription({ problem, currentProblemId, onProblemChange, allPro
             ))}
           </ul>
         </div>
+
+        {/* SOLUTION SECTION */}
+        {problem.solution?.[selectedLanguage] && (
+          <div className="bg-base-100 rounded-xl shadow-sm p-5 border border-base-300">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-base-content">Solution</h2>
+              <button
+                className="btn btn-ghost btn-xs"
+                onClick={onToggleSolution}
+              >
+                {showSolution ? "Hide Solution" : "Show Solution"}
+              </button>
+            </div>
+            {showSolution && (
+              <pre className="bg-base-200 rounded-lg p-4 text-sm font-mono overflow-auto whitespace-pre-wrap">
+                {problem.solution[selectedLanguage]}
+              </pre>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
