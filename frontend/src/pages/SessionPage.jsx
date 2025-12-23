@@ -11,6 +11,8 @@ import { getDifficultyBadgeClass } from "../lib/utils";
 import { Loader2Icon, LogOutIcon, PhoneOffIcon } from "lucide-react";
 import CodeEditorPanel from "../components/CodeEditorPanel";
 import OutputPanel from "../components/OutputPanel";
+import toast from "react-hot-toast";
+import confetti from "canvas-confetti";
 
 import useStreamClient from "../hooks/useStreamClient";
 import { StreamCall, StreamVideo } from "@stream-io/video-react-sdk";
@@ -47,6 +49,7 @@ function SessionPage() {
 
   const [selectedLanguage, setSelectedLanguage] = useState("javascript");
   const [code, setCode] = useState(problemData?.starterCode?.[selectedLanguage] || "");
+  const [showSolution, setShowSolution] = useState(false);
 
   const { search } = useLocation();
 
@@ -96,8 +99,35 @@ function SessionPage() {
   useEffect(() => {
     if (problemData?.starterCode?.[selectedLanguage]) {
       setCode(problemData.starterCode[selectedLanguage]);
+      setShowSolution(false);
     }
   }, [problemData, selectedLanguage]);
+
+  // Notify host via chat when a participant views the solution
+  useEffect(() => {
+    const notifyHostOfSolutionView = async () => {
+      try {
+        if (
+          showSolution &&
+          isParticipant &&
+          !isHost &&
+          channel &&
+          session?.problem
+        ) {
+          const displayName = user?.fullName || user?.firstName || user?.username || "Candidate";
+          const languageLabel = selectedLanguage.charAt(0).toUpperCase() + selectedLanguage.slice(1);
+
+          await channel.sendMessage({
+            text: `${displayName} viewed the solution for "${session.problem}" (${languageLabel}).`,
+          });
+        }
+      } catch (err) {
+        console.error("Failed to notify host about solution view", err);
+      }
+    };
+
+    notifyHostOfSolutionView();
+  }, [showSolution, isParticipant, isHost, channel, session, selectedLanguage, user]);
 
   const handleLanguageChange = (e) => {
     const newLang = e.target.value;
@@ -106,6 +136,46 @@ function SessionPage() {
     const starterCode = problemData?.starterCode?.[newLang] || "";
     setCode(starterCode);
     setOutput(null);
+    setShowSolution(false);
+  };
+
+  const triggerConfetti = () => {
+    confetti({
+      particleCount: 80,
+      spread: 250,
+      origin: { x: 0.2, y: 0.6 },
+    });
+
+    confetti({
+      particleCount: 80,
+      spread: 250,
+      origin: { x: 0.8, y: 0.6 },
+    });
+  };
+
+  const normalizeOutput = (outputStr) => {
+    if (!outputStr) return "";
+
+    return outputStr
+      .trim()
+      .split("\n")
+      .map((line) =>
+        line
+          .trim()
+          .replace(/\[\s+/g, "[")
+          .replace(/\s+\]/g, "]")
+          .replace(/\s*,\s*/g, ",")
+          .replace(/'/g, '"')
+      )
+      .filter((line) => line.length > 0)
+      .join("\n");
+  };
+
+  const checkIfTestsPassed = (actualOutput, expectedOutput) => {
+    const normalizedActual = normalizeOutput(actualOutput);
+    const normalizedExpected = normalizeOutput(expectedOutput);
+
+    return normalizedActual === normalizedExpected;
   };
 
   const handleRunCode = async () => {
@@ -115,6 +185,29 @@ function SessionPage() {
     const result = await executeCode(selectedLanguage, code);
     setOutput(result);
     setIsRunning(false);
+
+    // If we know the problem and expected output, show toast based on tests
+    if (problemData?.expectedOutput?.[selectedLanguage]) {
+      if (result.success) {
+        const expectedOutput = problemData.expectedOutput[selectedLanguage];
+        const testsPassed = checkIfTestsPassed(result.output, expectedOutput);
+
+        if (testsPassed) {
+          triggerConfetti();
+          toast.success("All tests passed! Great job!");
+          setShowSolution(true);
+        } else {
+          toast.error("Tests failed. Check your output!");
+        }
+      } else {
+        toast.error("Code execution failed!");
+      }
+    } else if (result.success) {
+      // fallback: for problems without configured expectedOutput
+      toast.success("Code ran successfully.");
+    } else {
+      toast.error("Code execution failed!");
+    }
   };
 
   const handleEndSession = () => {
@@ -250,6 +343,26 @@ function SessionPage() {
                             </li>
                           ))}
                         </ul>
+                      </div>
+                    )}
+
+                    {/* Solution Section */}
+                    {problemData?.solution?.[selectedLanguage] && (
+                      <div className="bg-base-100 rounded-xl shadow-sm p-5 border border-base-300">
+                        <div className="flex items-center justify-between mb-4">
+                          <h2 className="text-xl font-bold text-base-content">Solution</h2>
+                          <button
+                            className="btn btn-ghost btn-xs"
+                            onClick={() => setShowSolution((prev) => !prev)}
+                          >
+                            {showSolution ? "Hide Solution" : "Show Solution"}
+                          </button>
+                        </div>
+                        {showSolution && (
+                          <pre className="bg-base-200 rounded-lg p-4 text-sm font-mono overflow-auto whitespace-pre-wrap">
+                            {problemData.solution[selectedLanguage]}
+                          </pre>
+                        )}
                       </div>
                     )}
                   </div>

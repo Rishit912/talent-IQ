@@ -21,6 +21,7 @@ function ProblemPage() {
   const [code, setCode] = useState(PROBLEMS[currentProblemId].starterCode.javascript);
   const [output, setOutput] = useState(null);
   const [isRunning, setIsRunning] = useState(false);
+  const [showSolution, setShowSolution] = useState(false);
 
   const currentProblem = PROBLEMS[currentProblemId];
 
@@ -30,6 +31,7 @@ function ProblemPage() {
       setCurrentProblemId(id);
       setCode(PROBLEMS[id].starterCode[selectedLanguage]);
       setOutput(null);
+      setShowSolution(false);
     }
   }, [id, selectedLanguage]);
 
@@ -38,6 +40,7 @@ function ProblemPage() {
     setSelectedLanguage(newLang);
     setCode(currentProblem.starterCode[newLang]);
     setOutput(null);
+    setShowSolution(false);
   };
 
   const handleProblemChange = (newProblemId) => navigate(`/problem/${newProblemId}`);
@@ -69,6 +72,8 @@ function ProblemPage() {
           .replace(/\s+\]/g, "]")
           // normalize spaces around commas to single space after comma
           .replace(/\s*,\s*/g, ",")
+          // normalize single vs double quotes in outputs like arrays of strings
+          .replace(/'/g, '"')
       )
       .filter((line) => line.length > 0)
       .join("\n");
@@ -119,6 +124,9 @@ function ProblemPage() {
               currentProblemId={currentProblemId}
               onProblemChange={handleProblemChange}
               allProblems={Object.values(PROBLEMS)}
+              selectedLanguage={selectedLanguage}
+              showSolution={showSolution}
+              onToggleSolution={() => setShowSolution((prev) => !prev)}
             />
           </Panel>
 

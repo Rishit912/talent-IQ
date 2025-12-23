@@ -23,7 +23,8 @@ const allowedOrigins = [
     ENV.CLIENT_URL || "http://localhost:5173",
     "http://localhost:5173",
     "http://localhost:5174",
-    "https://talent-iq-nmba.onrender.com",
+
+    "http://localhost:3000",
 ];
 
 const isAllowedOrigin = (origin) => {
