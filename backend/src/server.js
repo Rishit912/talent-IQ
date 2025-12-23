@@ -23,8 +23,9 @@ const allowedOrigins = [
     ENV.CLIENT_URL || "http://localhost:5173",
     "http://localhost:5173",
     "http://localhost:5174",
-
     "http://localhost:3000",
+    // Explicit deployed frontend origin
+    "https://talent-iq-frontend-ivory.vercel.app",
 ];
 
 const isAllowedOrigin = (origin) => {
