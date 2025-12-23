@@ -17,12 +17,11 @@ function CodeEditorPanel({
     <div className="h-full bg-base-300 flex flex-col">
       <div className="flex items-center justify-between px-4 py-3 bg-base-100 border-t border-base-300">
         <div className="flex items-center gap-3">
-          {/* 2. Added ?. to icon and name to prevent crashes */}
           {currentLangConfig?.icon && (
             <img
-              src={LANGUAGE_CONFIG[selectedLanguage]}
+              src={currentLangConfig.icon}
               alt={currentLangConfig.name || "Language icon"}
-              className="size-6"
+              className="size-6 rounded"
             />
           )}
           

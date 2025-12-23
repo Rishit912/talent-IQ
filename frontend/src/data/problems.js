@@ -662,7 +662,7 @@ print(maxArea([1,1]))  # 1`,
 export const LANGUAGE_CONFIG = {
   javascript: {
     name: "JavaScript",
-    icon: "/javascript (1).png",
+    icon: "/javascript.png",
     monacoLang: "javascript",
   },
   python: {
