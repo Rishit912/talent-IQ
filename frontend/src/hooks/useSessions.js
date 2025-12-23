@@ -36,7 +36,12 @@ export const useSessionById = (id) => {
     queryKey: ["session", id],
     queryFn: () => sessionApi.getSessionById(id),
     enabled: !!id,
-    refetchInterval: 5000, // refetch every 5 seconds to detect session status changes
+    // Refetch periodically only while the session is active
+    // TanStack Query passes the resolved data as the first argument
+    refetchInterval: (data) => {
+      const status = data?.session?.status;
+      return status === "active" ? 5000 : false;
+    },
   });
 
   return result;

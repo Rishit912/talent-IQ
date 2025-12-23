@@ -25,6 +25,7 @@ function SessionPage() {
   const [output, setOutput] = useState(null);
   const [isRunning, setIsRunning] = useState(false);
   const [joinedViaInvite, setJoinedViaInvite] = useState(false);
+  const [needsAccessCode, setNeedsAccessCode] = useState(false);
 
   const { data: sessionData, isLoading: loadingSession, refetch } = useSessionById(id);
 
@@ -32,8 +33,9 @@ function SessionPage() {
   const endSessionMutation = useEndSession();
 
   const session = sessionData?.session;
+  const participants = session?.participants || [];
   const isHost = session?.host?.clerkId === user?.id;
-  const isParticipant = session?.participant?.clerkId === user?.id;
+  const isParticipant = participants.some((p) => p?.clerkId === user?.id);
 
   const { call, channel, chatClient, isInitializingCall, streamClient } = useStreamClient(
     session,
@@ -59,34 +61,55 @@ function SessionPage() {
     if (isHost || isParticipant) return;
 
     (async () => {
-      try {
-        const params = new URLSearchParams(search);
-        const invite = params.get('invite');
-        if (invite) {
-          // join via invite token
+      let joined = false;
+
+      // 1) Try invite-based join first (if token present)
+      const params = new URLSearchParams(search);
+      const invite = params.get('invite');
+      if (invite) {
+        try {
           const res = await sessionApi.joinWithInvite(invite);
           if (res && res.session) {
             setJoinedViaInvite(true);
             refetch();
-            return;
+            joined = true;
           }
+        } catch (e) {
+          console.error('Invite-based join failed, falling back to normal join', e);
         }
+      }
 
-        // If session is protected, prompt for access code
-        if (session.isProtected) {
-          const code = window.prompt('This session requires an access code. Please enter it:');
-          if (code === null) return; // user cancelled
-          joinSessionMutation.mutate({ id, accessCode: code }, { onSuccess: refetch });
-          return;
-        }
+      if (joined) return;
 
-        // otherwise join normally
+      // 2) If session is protected, show join button instead of auto prompt
+      if (session.isProtected) {
+        setNeedsAccessCode(true);
+        return;
+      }
+
+      // 3) Otherwise join normally
+      try {
         joinSessionMutation.mutate(id, { onSuccess: refetch });
       } catch (e) {
         console.error('Auto-join failed', e);
       }
     })();
   }, [session, user, loadingSession, isHost, isParticipant, id, search]);
+
+  const handleJoinAsParticipant = () => {
+    if (!session) return;
+
+    // Protected sessions: ask for access code via user-initiated prompt
+    if (session.isProtected) {
+      const code = window.prompt('This session requires an access code. Please enter it:');
+      if (code === null) return;
+      joinSessionMutation.mutate({ id, accessCode: code }, { onSuccess: refetch });
+      return;
+    }
+
+    // Unprotected sessions: join directly
+    joinSessionMutation.mutate(id, { onSuccess: refetch });
+  };
 
   // redirect the "participant" when session ends
   useEffect(() => {
@@ -217,6 +240,24 @@ function SessionPage() {
     }
   };
 
+  const handleShareInvite = async () => {
+    try {
+      if (!session?._id) return;
+      const res = await sessionApi.createInvite(session._id);
+      const token = res?.token;
+      if (!token) {
+        toast.error("Failed to create invite");
+        return;
+      }
+      const link = `${window.location.origin}/session/${session._id}?invite=${token}`;
+      await navigator.clipboard.writeText(link);
+      toast.success("Invite link copied to clipboard");
+    } catch (e) {
+      console.error("Create invite error", e);
+      toast.error("Failed to create invite");
+    }
+  };
+
   return (
     <div className="h-screen bg-base-100 flex flex-col">
       <Navbar />
@@ -241,8 +282,13 @@ function SessionPage() {
                         )}
                         <p className="text-base-content/60 mt-2">
                           Host: {(!joinedViaInvite || isHost) ? (session?.host?.name || "Loading...") : 'Hidden'} •{" "}
-                          {session?.participant ? 2 : 1}/2 participants
+                          {1 + participants.length}/2 participants
                         </p>
+                        {participants.length > 0 && (
+                          <p className="text-base-content/60 mt-1">
+                            Candidate: {participants[0]?.name || "Joined"}
+                          </p>
+                        )}
                       </div>
 
                       <div className="flex items-center gap-3">
@@ -255,17 +301,36 @@ function SessionPage() {
                             session?.difficulty.slice(1) || "Easy"}
                         </span>
                         {isHost && session?.status === "active" && (
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={handleShareInvite}
+                              className="btn btn-outline btn-sm"
+                              type="button"
+                            >
+                              Share invite
+                            </button>
+                            <button
+                              onClick={handleEndSession}
+                              disabled={endSessionMutation.isPending}
+                              className="btn btn-error btn-sm gap-2"
+                              type="button"
+                            >
+                              {endSessionMutation.isPending ? (
+                                <Loader2Icon className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <LogOutIcon className="w-4 h-4" />
+                              )}
+                              End Session
+                            </button>
+                          </div>
+                        )}
+                        {!isHost && !isParticipant && session?.status === "active" && (
                           <button
-                            onClick={handleEndSession}
-                            disabled={endSessionMutation.isPending}
-                            className="btn btn-error btn-sm gap-2"
+                            type="button"
+                            className="btn btn-primary btn-sm"
+                            onClick={handleJoinAsParticipant}
                           >
-                            {endSessionMutation.isPending ? (
-                              <Loader2Icon className="w-4 h-4 animate-spin" />
-                            ) : (
-                              <LogOutIcon className="w-4 h-4" />
-                            )}
-                            End Session
+                            {session?.isProtected ? "Join with access code" : "Join session"}
                           </button>
                         )}
                         {session?.status === "completed" && (

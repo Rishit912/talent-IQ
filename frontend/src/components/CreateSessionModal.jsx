@@ -18,11 +18,13 @@ function CreateSessionModal({ isOpen, onClose }) {
     try {
       // send the problem title and difficulty so backend and frontend agree
       const problemObj = PROBLEMS[selectedProblemId];
+      const trimmedAccessCode = accessCode.trim();
       await createSessionMutation.mutateAsync({
         problem: problemObj.title,
         difficulty: problemObj.difficulty || "Easy",
         language: selectedLanguage,
-        accessCode: accessCode || undefined,
+        // only send accessCode if user actually entered something non-empty
+        accessCode: trimmedAccessCode.length > 0 ? trimmedAccessCode : undefined,
       });
       toast.success("Session created successfully!");
       onClose();
