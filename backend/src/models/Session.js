@@ -38,8 +38,11 @@ const sessionSchema = new mongoose.Schema(
 
 }, 
 { timestamps: true }
-    
-)
+	
+);
+
+// Automatically delete sessions 15 days after creation
+sessionSchema.index({ createdAt: 1 }, { expireAfterSeconds: 15 * 24 * 60 * 60 });
 
 const session = mongoose.model("Session", sessionSchema);
 
